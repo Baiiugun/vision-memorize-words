@@ -2,20 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="connect-src 'self'">
-  <script>
-    (() => {
-      const url = new URL(location.href);
-      if (url.searchParams.get('mock') === '1' && url.searchParams.get('demo') === '1' && !url.searchParams.has('bank')) return;
-      url.searchParams.set('mock', '1');
-      url.searchParams.set('demo', '1');
-      url.searchParams.delete('bank');
-      history.replaceState(history.state, '', url);
-    })();
-  </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>学生版词库与布置-老师登录版本</title>
+<title>维森学生单词背诵系统 · 老师版</title>
 <style>
   :root{--bg:#f5f6f8;--card:#fff;--ink:#1c2230;--sub:#5f6877;--faint:#8b93a1;--line:#e2e5ea;--acc:#2f6fdb;--acc-ink:#fff;--acc-weak:#e9f0fd;--new:#2f6fdb;--learn:#d4453c;--rev:#2a9a49;--sus:#b27a00;--sus-bg:#fff6dc;--ok-bg:#e8f6ec;--warn:#ff9800;--shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05)}
   @media (prefers-color-scheme:dark){:root{--bg:#13161b;--card:#1c2027;--ink:#e6e9ef;--sub:#a1a9b6;--faint:#7b8494;--line:#2d333d;--acc:#6b9cf4;--acc-ink:#0d1320;--acc-weak:#1f2c44;--new:#6b9cf4;--learn:#ef7a71;--rev:#5ec27b;--sus:#e2b440;--sus-bg:#362c18;--ok-bg:#1b3324;--shadow:none}}
@@ -31,7 +20,8 @@
   input[type=text],input[type=email],input[type=password],input[type=number]{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;min-width:0}
   input[type=checkbox]{width:18px;height:18px;accent-color:var(--acc);margin:0;flex:none}
   a{color:var(--acc)}
-  #banner{background:var(--warn);color:#fff;text-align:center;padding:5px 10px;font-weight:700;font-size:13px}
+  #banner{background:var(--card);border-bottom:1px solid var(--line);display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;padding:12px;color:var(--ink);font-weight:700;font-size:18px}
+  #banner span{padding:2px 9px;border-radius:8px;background:var(--acc-weak);color:var(--acc);font-size:14px}
   main{max-width:1080px;margin:0 auto;padding:14px 16px 40px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
   h1{font-size:21px;margin:4px 0 12px}
@@ -116,41 +106,41 @@
 </style>
 </head>
 <body>
-<div id="banner">⚠️ 测试版 · 学生版 · 老师登录版本</div>
+<header id="banner">维森学生单词背诵系统 <span>老师版</span></header>
 <main id="app"><p class="faint">加载中…</p></main>
 
 <script type="module">
 import { dayNumber } from './lib/anki-sched.js';
 import { login } from './lib/teacher-api.js';
-import { createTeacherApi, createMockTeacherApi } from './lib/yuedu-api.js?v=20261115-unified-library1';
+import { createTeacherApi } from './lib/yuedu-api.js';
 import { mountLibrary } from './lib/teaching-library.js?v=20261115-unified-library1';
 import { mountUpload } from './lib/teaching-upload.js?v=20261115-unified-library1';
 import { mountTeachingBrowser } from './lib/teaching-card-browser.js';
 
 const $ = (s) => document.querySelector(s);
 const app = $('#app');
-const PAGE_BASE = location.hostname === '127.0.0.1' && !location.search.includes('mock=1') ? 'https://baiiugun.github.io/vision-memorize-words/' : location.origin + location.pathname.replace(/[^/]*$/, '');
-const MOCK = new URLSearchParams(location.search).get('mock') === '1';
-const MOCK_Q = MOCK ? location.search : '';
+const PAGE_BASE = location.hostname === '127.0.0.1' ? 'https://baiiugun.github.io/vision-memorize-words/' : new URL('.', location.href);
+const importRequested = new URLSearchParams(location.search).has('import');
+const query = importRequested ? '?import=1' : '';
+if (location.search !== query) history.replaceState(null, '', location.pathname + query);
 const ssGet = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
 const ssSet = (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) { /* 忽略 */ } };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtTime = (s) => (s ? new Date(s).toLocaleString('zh-CN', { hour12: false }) : '—');
 const fmtDay = (s) => (s ? new Date(s).toLocaleDateString('zh-CN') : '');
 const isYd = (l) => l.kind === 'yuedu';
-// Keep working before the new homepage is published; the homepage also accepts either kind of code.
-const linkOf = (l) => `${PAGE_BASE}阅读词.html${MOCK ? '?mock=1' : ''}#k=${l.code}`;
+const linkOf = (l) => new URL(`阅读词.html#k=${encodeURIComponent(l.code)}`, PAGE_BASE).href;
 const noSql = (m) => (/kind|anki_test_bank|anki_test_assign|anki_test_teacher_assign|does not exist|schema cache/i.test(String(m)) ? '（请管理员确认学校教学数据库已安装。）' : '');
 const secTitle = (s) => s.label || [s.board, s.piece].filter(Boolean).join(' · ');
 
-let api = null, learners = [], papers = [], view = new URLSearchParams(location.search).has('import') ? 'import' : 'list', cur = null;
+let api = null, learners = [], papers = [], view = importRequested ? 'import' : 'list', cur = null;
 let learnerTab = 'manage';
 
 // ---------- 学校账号登录 ----------
 function showLogin(msg) {
   app.innerHTML = `<div class="card" style="max-width:520px;margin:30px auto"><h1>老师登录</h1>
     <div class="row"><input type="text" id="em" placeholder="老师账号" size="26" autocomplete="username"><input type="password" id="pw" placeholder="老师密码" autocomplete="current-password"><button class="pri" id="go">登录</button></div>
-    ${msg ? `<p class="err">${esc(msg)}</p>` : ''}<p class="faint">密码只发给 Supabase 登录，不会存在这个网页里。</p></div>`;
+    ${msg ? `<p class="err">${esc(msg)}</p>` : ''}<p class="faint">请使用学校分配的老师账号。</p></div>`;
   const go = async () => {
     try { const token = await login($('#em').value.trim(), $('#pw').value); ssSet('vision_teacher_token', token); api = createTeacherApi(token); await loadAll(); }
     catch (e) { showLogin(e.message); }
@@ -163,41 +153,37 @@ function authFail(e) { return e.status === 401 || /JWT|expired/i.test(e.message)
 async function loadAll() {
   app.innerHTML = '<p class="faint">加载中…</p>';
   try {
-    if (MOCK && !api) api = await createMockTeacherApi();
     learners = (await api.listLearners()).filter(isYd);
     try { papers = await api.listPapers(); } catch (e) { if (authFail(e)) throw e; papers = null; }
     render();
   } catch (e) {
     if (authFail(e)) { ssSet('vision_teacher_token', null); return showLogin('登录过期，请重新登录'); }
-    app.innerHTML = `<h1>出错了</h1><p class="err">${esc(e.message)}</p><button id="rl">重试</button> <button class="ghost" id="lo">退出登录</button>`;
+    const unavailable = e.code === 'PGRST205' || e.code === 'PGRST202' || e.status === 404;
+    const message = unavailable ? '学校教学库尚未初始化，请联系管理员完成设置。' : '暂时无法读取教学数据，请稍后重试。';
+    app.innerHTML = `<div class="card"><h1>教学数据暂不可用</h1><p class="err">${message}</p><button id="rl">重试</button> <button class="ghost" id="lo">退出登录</button></div>`;
     $('#rl').onclick = loadAll; $('#lo').onclick = logout;
   }
 }
 function nav() {
-  return `<div class="row" style="margin-bottom:12px"><h1 style="margin:0 10px 0 0">学生版 · 老师页</h1>
-    <button data-v="list" class="${view === 'list' || view === 'student' ? 'on' : ''}">学生</button><button data-v="bank" class="${view === 'bank' ? 'on' : ''}">词库 · 选词布置</button><button data-v="import" class="${view === 'import' ? 'on' : ''}">导入词库</button><a href="Augie-Anki测试-老师登录版本.html${MOCK_Q}" class="faint">家庭版 →</a>
-    <span class="sp"></span>${MOCK ? '<span class="chip old">离线演示</span> <a href="#" id="rs" class="faint">清空演示数据</a>' : '<button class="ghost" id="lo">退出登录</button>'}</div>
+  return `<div class="row" style="margin-bottom:12px">
+    <button data-v="list" class="${view === 'list' || view === 'student' ? 'on' : ''}">学生</button><button data-v="bank" class="${view === 'bank' ? 'on' : ''}">词库 · 选词布置</button><button data-v="import" class="${view === 'import' ? 'on' : ''}">导入词库</button>
+    <span class="sp"></span><button class="ghost" id="lo">退出登录</button></div>
     ${papers === null ? `<div class="card err">读不到词库${noSql('anki_test_bank')}。运行后刷新本页。</div>` : ''}`;
 }
 function bindNav() {
   app.querySelectorAll('[data-v]').forEach((b) => b.onclick = () => { view = b.dataset.v; render(); });
   $('#lo')?.addEventListener('click', logout);
-  $('#rs')?.addEventListener('click', (e) => { e.preventDefault(); api.reset(); location.reload(); });
 }
 function render() { if (view === 'bank') return showBank(); if (view === 'import') return showImport(); if (view === 'student' && cur) return openLearner(cur); showList(); }
 
 // ---------- 学生列表 ----------
 function showList() {
   view = 'list';
-  const rows = learners.map((l) => isYd(l)
-    ? `<tr><td><b>${esc(l.name)}</b>${l.status === 'paused' ? ' <span class="chip old">已停用</span>' : ''}</td><td><span class="chip">学生版阅读词</span></td><td class="sub">${fmtTime(l.last_active)}</td>
+  const rows = learners.map((l) => `<tr><td><b>${esc(l.name)}</b>${l.status === 'paused' ? ' <span class="chip old">已停用</span>' : ''}</td><td class="sub">${fmtTime(l.last_active)}</td>
         <td style="text-align:right;white-space:nowrap"><button data-copy="${l.id}">复制链接</button> <button class="pri" data-open="${l.id}">进入</button>
-          <button class="ghost" data-pause="${l.id}" title="停用后学生链接打不开，数据全部保留">${l.status === 'paused' ? '恢复启用' : '停用'}</button><span data-delslot="${l.id}"></span></td></tr>`
-    : `<tr><td><b>${esc(l.name)}</b></td><td><span class="chip old">低年级多 Deck 版</span></td><td class="sub">${fmtTime(l.last_active)}</td>
-        <td style="text-align:right;white-space:nowrap"><a href="Augie-Anki测试-老师登录版本.html${MOCK_Q}">去原来的老师页 →</a>
           <button class="ghost" data-pause="${l.id}" title="停用后学生链接打不开，数据全部保留">${l.status === 'paused' ? '恢复启用' : '停用'}</button><span data-delslot="${l.id}"></span></td></tr>`).join('');
   app.innerHTML = `${nav()}
-    <div class="card"><h2>学生</h2><div class="tbl-wrap"><table><thead><tr><th>学生</th><th>类型</th><th>最近打开</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="sub">还没有学生</td></tr>'}</tbody></table></div>
+    <div class="card"><h2>学生</h2><div class="tbl-wrap"><table><thead><tr><th>学生</th><th>最近打开</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="3" class="sub">还没有学生</td></tr>'}</tbody></table></div>
       <p class="faint">学生链接 = 学生的“钥匙”，不要贴到公开的地方。<br>
         停用 = 链接暂时打不开，数据全部保留；删除 = 永久删掉这个学生（要输入完整姓名），只有还没背过任何词的学生（比如建错了）才会出现“删除”按钮。删学生不会动词库。</p></div>
     <div class="card"><h2>新增学生</h2>
@@ -334,7 +320,7 @@ function renderLearner(l, asg, rows, stats, bank, note) {
         <div class="msg" id="lmsg"></div>
         <h3>这个学生能做什么</h3>
         <label><input type="checkbox" id="self-manage" ${l.self_manage ? 'checked' : ''}> 允许学生自己管理卡片：暂停/取消暂停、设为今天复习、个人列表删除/恢复、隐藏标签</label>
-        <p class="sub">学生和老师使用同一套 Augie 卡片管理界面；颜色标记始终可用。关闭自主管理后，学生可查看和标记，其他管理操作由老师执行。</p><div class="msg" id="permission-msg"></div></div>
+        <p class="sub">学生可随时查看和标记卡片。关闭自主管理后，其他管理操作由老师执行。</p><div class="msg" id="permission-msg"></div></div>
     </div>
 
     <div class="card" id="suspended-manager-summary"><h2>已暂停的卡片 <span class="chip old">${susList.length}</span></h2>
@@ -455,8 +441,7 @@ function showImport() {
 }
 
 const saved = ssGet('vision_teacher_token');
-if (MOCK) loadAll();
-else if (saved) { api = createTeacherApi(saved); loadAll(); }
+if (saved) { api = createTeacherApi(saved); loadAll(); }
 else showLogin();
 </script>
 </body>

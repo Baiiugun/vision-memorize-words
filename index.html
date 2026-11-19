@@ -3,28 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="connect-src 'self'">
-<title>维森背词系统测试</title>
+<title>维森学生单词背诵系统</title>
 <style>
-:root{color-scheme:light;font-family:system-ui,"Microsoft YaHei",sans-serif;color:#163426;background:#f1f6f3}
-body{margin:0;padding:24px}
-main{max-width:640px;margin:clamp(24px,10vh,100px) auto;padding:clamp(22px,5vw,38px);border:1px solid #d7e4db;border-radius:16px;background:#fff}
-h1{margin:0 0 12px;font-size:clamp(24px,6vw,32px)}
-p{line-height:1.6;color:#4b6657}
-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:24px 0}
-a{display:block;padding:14px 18px;border-radius:8px;background:#216a4b;color:white;font-weight:650;text-decoration:none}
-a:focus-visible{outline:3px solid #538e72;outline-offset:4px}
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px;background:#f5f6f8;color:#1c2230;font-family:system-ui,"Microsoft YaHei",sans-serif}
+  main{max-width:600px;margin:clamp(12px,10vh,80px) auto;padding:clamp(22px,6vw,36px);border:1px solid #e2e5ea;border-radius:14px;background:#fff}
+  h1{margin:0 0 24px;font-size:clamp(22px,5vw,30px)}
+  nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
+  a{padding:13px 16px;border-radius:8px;background:#215fb9;color:#fff;font-weight:650;text-align:center;text-decoration:none}
+  a:hover{background:#174a97}
+  a:focus-visible{outline:3px solid #215fb9;outline-offset:4px}
 </style>
 </head>
 <body>
 <main>
-<h1>维森背词系统测试</h1>
-<p>用同一个浏览器打开两个版本。学生答题后，刷新老师版即可看到进度。</p>
-<nav aria-label="测试入口">
-<a href="./%E9%98%85%E8%AF%BB%E8%AF%8D-%E8%80%81%E5%B8%88%E7%99%BB%E5%BD%95%E7%89%88%E6%9C%AC.html?mock=1&amp;demo=1">打开老师版</a>
-<a href="./%E9%98%85%E8%AF%BB%E8%AF%8D.html?mock=1&amp;demo=1">打开学生版</a>
-</nav>
-<p>示例学生已有 4 个词。演示免登录，记录保存在当前浏览器。</p>
+  <h1>维森学生单词背诵系统</h1>
+  <nav aria-label="选择版本"><a href="阅读词-老师登录版本.html">老师版</a><a href="阅读词.html">学生版</a></nav>
 </main>
 </body>
 </html>

@@ -2,20 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="connect-src 'self'">
-  <script>
-    (() => {
-      const url = new URL(location.href);
-      if (url.searchParams.get('mock') === '1' && url.searchParams.get('demo') === '1' && !url.searchParams.has('bank')) return;
-      url.searchParams.set('mock', '1');
-      url.searchParams.set('demo', '1');
-      url.searchParams.delete('bank');
-      history.replaceState(history.state, '', url);
-    })();
-  </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>学生版 · 阅读词（测试版）</title>
+<title>维森学生单词背诵系统 · 学生版</title>
 <style>
   :root{--bg:#f5f6f8;--card:#fff;--ink:#1c2230;--sub:#5f6877;--faint:#8b93a1;--line:#e2e5ea;--acc:#2f6fdb;--acc-ink:#fff;--acc-weak:#e9f0fd;--new:#2f6fdb;--learn:#d4453c;--rev:#2a9a49;--sus:#b27a00;--sus-bg:#fff6dc;--ok-bg:#e8f6ec;--warn:#ff9800;--shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05)}
   @media (prefers-color-scheme:dark){:root{--bg:#13161b;--card:#1c2027;--ink:#e6e9ef;--sub:#a1a9b6;--faint:#7b8494;--line:#2d333d;--acc:#6b9cf4;--acc-ink:#0d1320;--acc-weak:#1f2c44;--new:#6b9cf4;--learn:#ef7a71;--rev:#5ec27b;--sus:#e2b440;--sus-bg:#362c18;--ok-bg:#1b3324;--shadow:none}}
@@ -29,7 +18,8 @@
   button.warn{color:var(--sus);border-color:var(--sus)}
   input[type=text],select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;min-width:0}
   input[type=checkbox]{width:18px;height:18px;accent-color:var(--acc);margin:0;flex:none}
-  #banner{background:var(--warn);color:#fff;text-align:center;padding:5px 10px;font-weight:700;font-size:13px}
+  #banner{background:var(--card);border-bottom:1px solid var(--line);display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;padding:12px;color:var(--ink);font-weight:700;font-size:18px}
+  #banner span{padding:2px 9px;border-radius:8px;background:var(--acc-weak);color:var(--acc);font-size:14px}
   .wrap{max-width:720px;margin:0 auto;padding:14px 16px calc(28px + env(safe-area-inset-bottom))}
   .wrap.wide{max-width:1000px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
@@ -94,13 +84,13 @@
 </style>
 </head>
 <body>
-<div id="banner">⚠️ 测试版 · 学生学习</div>
+<header id="banner">维森学生单词背诵系统 <span>学生版</span></header>
 <div id="app"><div class="empty">加载中…</div></div>
 <div id="toast-root"></div>
 <div id="sync" class="sync" hidden></div>
 
 <script type="module">
-import { createStudentApi, createMockStudentApi, stateOf } from './lib/yuedu-api.js';
+import { createStudentApi, stateOf } from './lib/yuedu-api.js';
 import { CFG, answer, previewIntervals, formatDelay, buildQueue, nextCard } from './lib/anki-sched.js';
 import { mediaBase } from './lib/config.js';
 import { mountOriginalCard } from './lib/card-view.js';
@@ -109,7 +99,6 @@ import { formatHtml } from './lib/card-format.js';
 
 const $ = (s) => document.querySelector(s);
 const app = $('#app');
-const MOCK = new URLSearchParams(location.search).get('mock') === '1';
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { /* 忽略 */ } };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -118,14 +107,11 @@ let disposeOriginal = () => {};
 let originalAnswers = {}, originalKey = '';
 const normCode = (s) => (s || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 
-// ---------- 学习码：从链接 #k=… 取，存本机（和 Augie 的页面分开存），再把地址栏清干净 ----------
-let code = '';
-{
-  const m = location.hash.match(/k=([^&]+)/);
-  if (m) { code = normCode(decodeURIComponent(m[1])); if (code.length === 16 && !MOCK) lsSet('vision_yuedu_code', code); history.replaceState(null, '', location.pathname + location.search); }
-  if (MOCK) { if (code.length !== 16) code = normCode(sessionStorage.getItem('vision_yuedu_mock_code')) || 'MOCKMOCKMOCKMOCK'; try { sessionStorage.setItem('vision_yuedu_mock_code', code); } catch (e) { /* 忽略 */ } }   // 离线演示不动真实的学习码
-  else if (!code) code = normCode(lsGet('vision_yuedu_code'));
-}
+const incomingCode = new URLSearchParams(location.hash.slice(1)).get('k');
+const code = normCode(incomingCode ?? lsGet('vision_yuedu_code'));
+if (incomingCode !== null) lsSet('vision_yuedu_code', code.length === 16 ? code : null);
+if (location.hash || location.search) history.replaceState(null, '', location.pathname);
+const pendingKey = `vision_yuedu_pending:${code}`;
 
 // ---------- 状态 ----------
 const S = { api: null, learner: null, skew: 0, today: 0, papers: [], cards: new Map(), log: [], pending: [], flushing: false,
@@ -144,9 +130,9 @@ const kind = (c) => (c.suspended ? 'sus' : c.type === 0 ? 'new' : c.type === 2 &
 
 async function boot() {
   try {
-    if (!MOCK && code.length !== 16) return showCodeInput();
-    S.api = MOCK ? await createMockStudentApi(code) : createStudentApi(code);
-    try { S.pending = JSON.parse(lsGet('vision_yuedu_pending') || '[]'); } catch (e) { S.pending = []; }
+    if (code.length !== 16) return showCodeInput();
+    S.api = createStudentApi(code);
+    try { S.pending = JSON.parse(lsGet(pendingKey) || '[]'); } catch (e) { S.pending = []; }
     if (S.pending.length) await flush();
     await refresh();
     render();
@@ -161,10 +147,12 @@ async function refresh() {
 }
 function showError(e) {
   const m = String(e.message || e);
-  const bad = m === 'invalid code' || m === 'bad code', notYd = /not yuedu/.test(m), noSql = /does not exist|schema cache|404/.test(m);
-  app.innerHTML = `<div class="wrap"><div class="card empty"><div class="big">😕</div><h2>${bad ? '链接不对或已失效' : notYd ? '这个链接不是“阅读词”的链接' : '打不开'}</h2>
-    <p class="sub">${bad ? '请让老师重新发一次链接。' : notYd ? '请用老师发给你的“阅读词”链接打开。' : noSql ? '系统还没准备好（数据库还没运行 10 号 SQL），请告诉老师。' : '网络可能不好，请稍后重试。'}</p>
-    <p class="faint">${esc(m)}</p><button class="pri" onclick="location.reload()">重试</button></div></div>`;
+  const bad = m === 'invalid code' || m === 'bad code' || m === 'not yuedu learner';
+  const unavailable = e.code === 'PGRST202' || e.status === 404;
+  app.innerHTML = `<div class="wrap"><div class="card empty"><h2>${bad ? '链接不对或已失效' : '教学数据暂不可用'}</h2>
+    <p class="sub">${bad ? '请让老师重新发一次链接。' : unavailable ? '学校教学库尚未初始化，请联系老师。' : '请稍后重试。'}</p>
+    <button class="pri" id="retry-study">${bad ? '重新输入学习码' : '重试'}</button></div></div>`;
+  $('#retry-study').onclick = () => { if (bad) showCodeInput(); else location.reload(); };
 }
 function showCodeInput() {
   app.innerHTML = `<div class="wrap"><div class="card"><h1>请打开老师发给你的链接</h1><p class="sub">或者在这里输入链接里 #k= 后面的 16 位学习码。</p>
@@ -201,11 +189,9 @@ function renderHome() {
         <div class="stats"><span>待复习 <span class="n-rev">${k.r + k.l}</span></span><span>今天可学新词 <span class="n-new">${k.n}</span></span><span class="sub">已布置 ${st.total} 词</span></div></div>
         <button class="pri">进入</button></div>
       <div class="row" style="justify-content:flex-end"><button class="ghost" id="mywords">🗂 管理卡片（选今天学哪些）</button></div>`;
-  app.innerHTML = `<div class="wrap"><h1>你好，${esc(S.learner.name)}</h1>${body}${!all.length && S.cards.size ? `<p><button id="mywords">🗂 管理卡片（含已删除）</button></p>` : ''}
-    ${MOCK ? `<p class="faint">离线演示：进度只存在这台设备上。<a href="#" id="rs">清空演示数据</a></p>` : ''}</div>`;
+  app.innerHTML = `<div class="wrap"><h1>你好，${esc(S.learner.name)}</h1>${body}${!all.length && S.cards.size ? `<p><button id="mywords">🗂 管理卡片（含已删除）</button></p>` : ''}</div>`;
   $('#deck')?.addEventListener('click', () => go('pick'));
   $('#mywords')?.addEventListener('click', () => go('words'));
-  $('#rs')?.addEventListener('click', (e) => { e.preventDefault(); S.api.reset(); location.reload(); });
 }
 
 function renderPick() {
@@ -379,7 +365,7 @@ function toast(msg, undoable) {
 }
 
 // ---------- 存回云端（按顺序；失败自动重试；重复提交只算一次） ----------
-function enqueue(job) { S.pending.push(job); lsSet('vision_yuedu_pending', JSON.stringify(S.pending)); flush(); }
+function enqueue(job) { S.pending.push(job); lsSet(pendingKey, JSON.stringify(S.pending)); flush(); }
 async function flush() {
   if (S.flushing) return; S.flushing = true; setSync();
   while (S.pending.length) {
@@ -388,10 +374,10 @@ async function flush() {
       if (j.kind === 'answer') await S.api.answer(j.key, j.state, j.log);
       else if (j.kind === 'undo') await S.api.undo(j.key, j.prev, j.uid);
       else await S.api.setSuspended([j.key], j.flag);
-      S.pending.shift(); lsSet('vision_yuedu_pending', JSON.stringify(S.pending)); setSync();
+      S.pending.shift(); lsSet(pendingKey, JSON.stringify(S.pending)); setSync();
     } catch (e) {
       if (e.status && e.status < 500 && e.status !== 408 && e.status !== 429) {
-        console.warn('丢弃无法保存的记录', j, e); S.pending.shift(); lsSet('vision_yuedu_pending', JSON.stringify(S.pending));
+        S.pending.shift(); lsSet(pendingKey, JSON.stringify(S.pending));
         toast('有一步没保存上：' + (e.message || e.status) + '。请刷新页面。'); continue;
       }
       setSync(true); S.flushing = false; setTimeout(flush, 8000); return;
