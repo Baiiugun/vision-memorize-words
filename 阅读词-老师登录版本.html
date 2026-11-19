@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="connect-src 'self'">
+  <script>
+    (() => {
+      const url = new URL(location.href);
+      if (url.searchParams.get('mock') === '1' && url.searchParams.get('demo') === '1' && !url.searchParams.has('bank')) return;
+      url.searchParams.set('mock', '1');
+      url.searchParams.set('demo', '1');
+      url.searchParams.delete('bank');
+      history.replaceState(history.state, '', url);
+    })();
+  </script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>学生版词库与布置-老师登录版本</title>
+<style>
+  :root{--bg:#f5f6f8;--card:#fff;--ink:#1c2230;--sub:#5f6877;--faint:#8b93a1;--line:#e2e5ea;--acc:#2f6fdb;--acc-ink:#fff;--acc-weak:#e9f0fd;--new:#2f6fdb;--learn:#d4453c;--rev:#2a9a49;--sus:#b27a00;--sus-bg:#fff6dc;--ok-bg:#e8f6ec;--warn:#ff9800;--shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05)}
+  @media (prefers-color-scheme:dark){:root{--bg:#13161b;--card:#1c2027;--ink:#e6e9ef;--sub:#a1a9b6;--faint:#7b8494;--line:#2d333d;--acc:#6b9cf4;--acc-ink:#0d1320;--acc-weak:#1f2c44;--new:#6b9cf4;--learn:#ef7a71;--rev:#5ec27b;--sus:#e2b440;--sus-bg:#362c18;--ok-bg:#1b3324;--shadow:none}}
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:600}
+  button.ghost{background:transparent;border-color:transparent;color:var(--sub)}
+  button.on{background:var(--acc-weak);border-color:var(--acc);color:var(--acc);font-weight:600}
+  input[type=text],input[type=email],input[type=password],input[type=number]{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;min-width:0}
+  input[type=checkbox]{width:18px;height:18px;accent-color:var(--acc);margin:0;flex:none}
+  a{color:var(--acc)}
+  #banner{background:var(--warn);color:#fff;text-align:center;padding:5px 10px;font-weight:700;font-size:13px}
+  main{max-width:1080px;margin:0 auto;padding:14px 16px 40px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+  h1{font-size:21px;margin:4px 0 12px}
+  h2{font-size:17px;margin:0 0 10px}
+  h3{font-size:15px;margin:14px 0 6px}
+  .sub{color:var(--sub)}
+  .faint{color:var(--faint);font-size:13px}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .sp{flex:1}
+  .chip{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;background:var(--acc-weak);color:var(--acc);font-weight:600;white-space:nowrap}
+  .chip.lv{background:var(--ok-bg);color:var(--rev)}
+  .chip.old{background:var(--sus-bg);color:var(--sus)}
+  .n-new{color:var(--new);font-weight:700}.n-learn{color:var(--learn);font-weight:700}.n-rev{color:var(--rev);font-weight:700}.n-sus{color:var(--sus);font-weight:700}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:12px;color:var(--sub);font-weight:600;white-space:nowrap}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tbl-wrap{overflow-x:auto}
+  .tree{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:10px}
+  .tree .p{padding:10px 12px;background:var(--acc-weak);display:flex;gap:10px;align-items:center;font-weight:600}
+  .tree .s{padding:9px 12px 9px 40px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center}
+  .tree label{display:flex;gap:10px;align-items:center;flex:1;cursor:pointer}
+  .tree .dis{color:var(--faint)}
+  .progress-bar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;display:flex;min-width:80px}
+  .progress-bar i{display:block;height:100%}
+  .chart{display:flex;align-items:flex-end;gap:4px;height:120px;padding-top:8px}
+  .chart .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:var(--faint)}
+  .chart .c i{display:block;width:100%;max-width:28px;background:var(--acc);border-radius:4px 4px 0 0;min-height:2px}
+  .chart .c i.z{background:var(--line)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:820px){.grid2{grid-template-columns:1fr}}
+  .linkbox{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;word-break:break-all}
+  .err{color:var(--learn)}.ok{color:var(--rev)}
+  .empty{text-align:center;padding:30px 16px;color:var(--sub)}
+  .msg{min-height:1.4em;margin-top:8px}
+  .assignment-bar{position:sticky;top:8px;z-index:5;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:12px;margin:0 0 16px}
+  .recipient-picker{border:0;margin:0 0 10px;padding:0;min-width:0}
+  .recipient-picker legend{font-weight:700;margin-bottom:6px}
+  .recipient-options{max-height:100px;overflow-y:auto}
+  .recipient-options label{padding:5px 9px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+  .recipient-options label:has(input:checked){border-color:var(--acc);background:var(--acc-weak)}
+  .recipient-summary{font-weight:700;color:var(--acc);max-height:64px;overflow-y:auto;overflow-wrap:anywhere}
+  .recipient-summary.err{color:var(--learn)}
+  .assignment-bar .msg{max-height:76px;overflow-y:auto}
+  .assigned-actions{padding:10px 0;border-bottom:1px solid var(--line)}
+  .student-tabs{margin-bottom:14px;padding:10px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+  .library-results{margin:12px 0;border:1px solid var(--line);border-radius:10px;padding:0 12px}
+  .library-results summary{padding:10px 0;cursor:pointer;color:var(--acc)}
+  .library-result{padding:9px 0;border-top:1px solid var(--line)}
+  .library-result .sp{min-width:180px;overflow-wrap:anywhere}
+  .library-pagination{justify-content:center;padding:12px 0}
+  .active-library{margin-top:16px}
+  .word-filters{margin:12px 0}
+  .word-filters summary{cursor:pointer;color:var(--sub)}
+  @media(max-width:600px){.assignment-bar{top:0;padding:10px}.assignment-bar .row{gap:7px}.assignment-bar #lib-assign{width:100%}.tree .s{flex-wrap:wrap;padding-left:16px}}
+  /* LIBRARY-COLLAPSE-V1 */
+  .library-content[hidden]{display:none!important}
+  .library-results{margin:12px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;padding:0}
+  .library-result+.library-result{border-top:1px solid var(--line)}
+  .library-result{padding:0}
+  .library-title{display:block;width:100%;border:0;border-radius:0;text-align:left;padding:13px 16px;background:var(--card);font-weight:600;overflow-wrap:anywhere}
+  .library-title::before{content:'▸';display:inline-block;width:1.3em;color:var(--acc)}
+  .library-title[aria-expanded=true]::before{content:'▾'}
+  .library-title[aria-expanded=true]{background:var(--acc-weak)}
+  .library-title:focus-visible{outline:2px solid var(--acc);outline-offset:-3px}
+  .library-content{padding:0 12px 12px}
+  .library-pagination{justify-content:center;padding:12px 0}
+  .word-filters{margin:12px 0}
+  .word-filters summary{cursor:pointer;color:var(--sub)}
+  /* /LIBRARY-COLLAPSE-V1 */
+  /* LIBRARY-QUICK-SELECTION-V1 */
+  .library-heading{display:flex;align-items:center;gap:10px;padding-right:14px}
+  .library-heading .library-title{flex:1;width:auto;min-width:160px;padding-left:4px}
+  .quick-select{display:flex;gap:8px;align-items:center;white-space:nowrap;cursor:pointer}
+  .library-heading>.quick-select{padding-left:16px}
+  .tree .quick-select{flex:1;white-space:normal}
+  .quick-tier{min-width:58px;white-space:nowrap}
+  .quick-tier[aria-pressed=true]{color:var(--acc);border-color:var(--acc);background:var(--acc-weak);font-weight:700}
+  .folder-heading{background:var(--bg);font-weight:600}
+  .folder-parts{margin-left:20px;border-left:2px solid var(--line)}
+  /* /LIBRARY-QUICK-SELECTION-V1 */
+</style>
+</head>
+<body>
+<div id="banner">⚠️ 测试版 · 学生版 · 老师登录版本</div>
+<main id="app"><p class="faint">加载中…</p></main>
+
+<script type="module">
+import { dayNumber } from './lib/anki-sched.js';
+import { login } from './lib/teacher-api.js';
+import { createTeacherApi, createMockTeacherApi } from './lib/yuedu-api.js?v=20261115-unified-library1';
+import { mountLibrary } from './lib/teaching-library.js?v=20261115-unified-library1';
+import { mountUpload } from './lib/teaching-upload.js?v=20261115-unified-library1';
+import { mountTeachingBrowser } from './lib/teaching-card-browser.js';
+
+const $ = (s) => document.querySelector(s);
+const app = $('#app');
+const PAGE_BASE = location.hostname === '127.0.0.1' && !location.search.includes('mock=1') ? 'https://baiiugun.github.io/vision-memorize-words/' : location.origin + location.pathname.replace(/[^/]*$/, '');
+const MOCK = new URLSearchParams(location.search).get('mock') === '1';
+const MOCK_Q = MOCK ? location.search : '';
+const ssGet = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+const ssSet = (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) { /* 忽略 */ } };
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtTime = (s) => (s ? new Date(s).toLocaleString('zh-CN', { hour12: false }) : '—');
+const fmtDay = (s) => (s ? new Date(s).toLocaleDateString('zh-CN') : '');
+const isYd = (l) => l.kind === 'yuedu';
+// Keep working before the new homepage is published; the homepage also accepts either kind of code.
+const linkOf = (l) => `${PAGE_BASE}阅读词.html${MOCK ? '?mock=1' : ''}#k=${l.code}`;
+const noSql = (m) => (/kind|anki_test_bank|anki_test_assign|anki_test_teacher_assign|does not exist|schema cache/i.test(String(m)) ? '（请管理员确认学校教学数据库已安装。）' : '');
+const secTitle = (s) => s.label || [s.board, s.piece].filter(Boolean).join(' · ');
+
+let api = null, learners = [], papers = [], view = new URLSearchParams(location.search).has('import') ? 'import' : 'list', cur = null;
+let learnerTab = 'manage';
+
+// ---------- 学校账号登录 ----------
+function showLogin(msg) {
+  app.innerHTML = `<div class="card" style="max-width:520px;margin:30px auto"><h1>老师登录</h1>
+    <div class="row"><input type="text" id="em" placeholder="老师账号" size="26" autocomplete="username"><input type="password" id="pw" placeholder="老师密码" autocomplete="current-password"><button class="pri" id="go">登录</button></div>
+    ${msg ? `<p class="err">${esc(msg)}</p>` : ''}<p class="faint">密码只发给 Supabase 登录，不会存在这个网页里。</p></div>`;
+  const go = async () => {
+    try { const token = await login($('#em').value.trim(), $('#pw').value); ssSet('vision_teacher_token', token); api = createTeacherApi(token); await loadAll(); }
+    catch (e) { showLogin(e.message); }
+  };
+  $('#go').onclick = go; $('#pw').onkeydown = (e) => { if (e.key === 'Enter') go(); };
+}
+function logout() { ssSet('vision_teacher_token', null); api = null; showLogin(); }
+function authFail(e) { return e.status === 401 || /JWT|expired/i.test(e.message); }
+
+async function loadAll() {
+  app.innerHTML = '<p class="faint">加载中…</p>';
+  try {
+    if (MOCK && !api) api = await createMockTeacherApi();
+    learners = (await api.listLearners()).filter(isYd);
+    try { papers = await api.listPapers(); } catch (e) { if (authFail(e)) throw e; papers = null; }
+    render();
+  } catch (e) {
+    if (authFail(e)) { ssSet('vision_teacher_token', null); return showLogin('登录过期，请重新登录'); }
+    app.innerHTML = `<h1>出错了</h1><p class="err">${esc(e.message)}</p><button id="rl">重试</button> <button class="ghost" id="lo">退出登录</button>`;
+    $('#rl').onclick = loadAll; $('#lo').onclick = logout;
+  }
+}
+function nav() {
+  return `<div class="row" style="margin-bottom:12px"><h1 style="margin:0 10px 0 0">学生版 · 老师页</h1>
+    <button data-v="list" class="${view === 'list' || view === 'student' ? 'on' : ''}">学生</button><button data-v="bank" class="${view === 'bank' ? 'on' : ''}">词库 · 选词布置</button><button data-v="import" class="${view === 'import' ? 'on' : ''}">导入词库</button><a href="Augie-Anki测试-老师登录版本.html${MOCK_Q}" class="faint">家庭版 →</a>
+    <span class="sp"></span>${MOCK ? '<span class="chip old">离线演示</span> <a href="#" id="rs" class="faint">清空演示数据</a>' : '<button class="ghost" id="lo">退出登录</button>'}</div>
+    ${papers === null ? `<div class="card err">读不到词库${noSql('anki_test_bank')}。运行后刷新本页。</div>` : ''}`;
+}
+function bindNav() {
+  app.querySelectorAll('[data-v]').forEach((b) => b.onclick = () => { view = b.dataset.v; render(); });
+  $('#lo')?.addEventListener('click', logout);
+  $('#rs')?.addEventListener('click', (e) => { e.preventDefault(); api.reset(); location.reload(); });
+}
+function render() { if (view === 'bank') return showBank(); if (view === 'import') return showImport(); if (view === 'student' && cur) return openLearner(cur); showList(); }
+
+// ---------- 学生列表 ----------
+function showList() {
+  view = 'list';
+  const rows = learners.map((l) => isYd(l)
+    ? `<tr><td><b>${esc(l.name)}</b>${l.status === 'paused' ? ' <span class="chip old">已停用</span>' : ''}</td><td><span class="chip">学生版阅读词</span></td><td class="sub">${fmtTime(l.last_active)}</td>
+        <td style="text-align:right;white-space:nowrap"><button data-copy="${l.id}">复制链接</button> <button class="pri" data-open="${l.id}">进入</button>
+          <button class="ghost" data-pause="${l.id}" title="停用后学生链接打不开，数据全部保留">${l.status === 'paused' ? '恢复启用' : '停用'}</button><span data-delslot="${l.id}"></span></td></tr>`
+    : `<tr><td><b>${esc(l.name)}</b></td><td><span class="chip old">低年级多 Deck 版</span></td><td class="sub">${fmtTime(l.last_active)}</td>
+        <td style="text-align:right;white-space:nowrap"><a href="Augie-Anki测试-老师登录版本.html${MOCK_Q}">去原来的老师页 →</a>
+          <button class="ghost" data-pause="${l.id}" title="停用后学生链接打不开，数据全部保留">${l.status === 'paused' ? '恢复启用' : '停用'}</button><span data-delslot="${l.id}"></span></td></tr>`).join('');
+  app.innerHTML = `${nav()}
+    <div class="card"><h2>学生</h2><div class="tbl-wrap"><table><thead><tr><th>学生</th><th>类型</th><th>最近打开</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="sub">还没有学生</td></tr>'}</tbody></table></div>
+      <p class="faint">学生链接 = 学生的“钥匙”，不要贴到公开的地方。<br>
+        停用 = 链接暂时打不开，数据全部保留；删除 = 永久删掉这个学生（要输入完整姓名），只有还没背过任何词的学生（比如建错了）才会出现“删除”按钮。删学生不会动词库。</p></div>
+    <div class="card"><h2>新增学生</h2>
+      <div class="row"><input type="text" id="nn" placeholder="学生名字，如 S001-示例学生" maxlength="40" style="width:240px"><button class="pri" id="add">新增并生成专属链接</button></div>
+      <div class="msg" id="addmsg"></div>
+      <p class="faint">默认允许学生管理自己的卡片；老师可在学习管理中关闭。新增后进入学生页面给他布置词库。</p></div>`;
+  bindNav();
+  app.querySelectorAll('[data-copy]').forEach((b) => b.onclick = async () => { const l = learners.find((x) => x.id === b.dataset.copy); try { await navigator.clipboard.writeText(linkOf(l)); b.textContent = '已复制 ✓'; } catch (e) { b.textContent = '复制失败，进入后手动复制'; } });
+  app.querySelectorAll('[data-open]').forEach((b) => b.onclick = () => { cur = learners.find((x) => x.id === b.dataset.open); learnerTab = 'manage'; view = 'student'; openLearner(cur); });
+  // 停用 / 恢复启用：停用后学生链接打不开，数据全部保留
+  app.querySelectorAll('[data-pause]').forEach((b) => b.onclick = async () => {
+    const l = learners.find((x) => x.id === b.dataset.pause), next = l.status === 'paused' ? 'active' : 'paused';
+    if (next === 'paused' && !confirm(`停用「${l.name}」？\n停用后他的链接打不开；进度和答题记录都保留，随时可以“恢复启用”。`)) return;
+    try { await api.updateLearner(l.id, { status: next }); learners = (await api.listLearners()).filter(isYd); showList(); } catch (e) { alert('失败：' + e.message); }
+  });
+  // 删除：只给“没有任何答题记录”的学生（建错了的）；有记录的只能停用
+  for (const l of learners) {
+    const slot = app.querySelector(`[data-delslot="${l.id}"]`); if (!slot) continue;
+    api.hasRecords(l.id).then((has) => {
+      slot.innerHTML = has ? '' : ' <button class="ghost" style="color:var(--learn)">删除</button>';
+      slot.querySelector('button')?.addEventListener('click', () => deleteLearner(l));
+    }).catch(() => { slot.innerHTML = ''; });
+  }
+  $('#add').onclick = async () => {
+    const name = $('#nn').value.trim(); if (!name) return;
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', rnd = crypto.getRandomValues(new Uint8Array(16)), code = Array.from(rnd, (b) => A[b % 32]).join('');
+    $('#add').disabled = true;
+    try {
+      await api.addLearner(name, code); learners = (await api.listLearners()).filter(isYd);
+      cur = learners.find((l) => l.code === code); learnerTab = 'assign'; view = 'student'; openLearner(cur, `已新增 ${name}。下一步：在“选词布置”里给他布置词库，再把专属链接发给他。`);
+    } catch (e) { $('#addmsg').innerHTML = `<span class="err">失败：${esc(e.message)}${noSql(e.message)}</span>`; $('#add').disabled = false; }
+  };
+}
+
+async function deleteLearner(l) {
+  try { if (await api.hasRecords(l.id)) return alert(`「${l.name}」已经有学习记录，不能删除。不想让他用可以点“停用”。`); }
+  catch (e) { return alert('检查失败：' + e.message); }
+  const typed = prompt(`永久删除学生「${l.name}」？\n\n会删掉：这个学生、他的链接、他的进度和布置记录。删除后找不回来。\n不会删：词库（试卷、单词、读音）、其他学生的任何东西。\n\n确认请输入学生的完整姓名：${l.name}`);
+  if (typed == null) return;
+  if (typed.trim() !== l.name) return alert('输入的姓名和「' + l.name + '」不完全一样，没有删除。');
+  try { const n = await api.deleteLearner(l.id); if (!n) throw new Error('没有删掉（可能已经被删了）'); learners = (await api.listLearners()).filter(isYd); cur = null; showList(); }
+  catch (e) { alert('删除失败：' + e.message); }
+}
+
+// ---------- 单个学生 ----------
+async function openLearner(l, note) {
+  app.innerHTML = '<p class="faint">加载中…</p>';
+  try {
+    const [asg, rows, stats] = await Promise.all([api.listAssignments(l.id), api.getCards(l.id), api.dailyStats(l.id, 14).catch(() => [])]);
+    const bank = await api.getBankCardsByKeys(rows.map((c) => c.card_key));
+    renderLearner(l, asg, rows, stats, bank, note);
+  } catch (e) {
+    if (authFail(e)) { ssSet('vision_teacher_token', null); return showLogin('登录过期，请重新登录'); }
+    app.innerHTML = `${nav()}<div class="card"><p class="err">${esc(e.message)}${noSql(e.message)}</p><button id="bk">返回</button></div>`; bindNav(); $('#bk').onclick = showList;
+  }
+}
+function renderLearner(l, asg, rows, stats, bank, note) {
+  const today = dayNumber(Date.now());
+  const bmap = new Map(bank.map((b) => [b.card_key, b]));
+  const asgSet = new Set(asg.map((a) => a.paper_id + '|' + a.section_id));
+  const asgAt = Object.fromEntries(asg.map((a) => [a.paper_id + '|' + a.section_id, a.assigned_at]));
+  // 每个板块的进度
+  const scopesOf = (b, key) => b.data?.map_schema === 'echoo.map.vocab.v1'
+    ? asg.filter((a) => a.paper_id === b.paper_id && a.card_keys?.includes(key)).map((a) => a.paper_id + '|' + a.section_id)
+    : [b.paper_id + '|' + b.section_id];
+  const assignedRowsNow = () => rows.filter((c) => { const b = bmap.get(c.card_key); return b && scopesOf(b, c.card_key).some((u) => asgSet.has(u)); });
+  function countRows(list) {
+    const o = { total: 0, n: 0, l: 0, r: 0, sus: 0, del: 0, due: 0, seen: 0 };
+    for (const c of list) {
+      if (c.deleted) { o.del++; continue; }
+      o.total++; if (c.reps > 0) o.seen++;
+      if (c.suspended) { o.sus++; continue; }
+      if (c.queue === 0) o.n++; else if (c.queue === 2) { o.r++; if (c.due <= today) o.due++; }
+      else { o.l++; if (c.queue === 3 ? c.due <= today : c.due <= Date.now() / 1000 + 1200) o.due++; }
+    }
+    return o;
+  }
+  const computeProgress = () => {
+    const groups = {};
+    for (const c of assignedRowsNow()) for (const u of scopesOf(bmap.get(c.card_key), c.card_key)) if (asgSet.has(u)) (groups[u] ||= []).push(c);
+    return Object.fromEntries(Object.entries(groups).map(([u, list]) => [u, countRows(list)]));
+  };
+  const prog = computeProgress();
+  const ps = papers || [];
+  // ② 已布置 + 进度
+  const asgRows = ps.flatMap((p) => p.sections.filter((s) => asgSet.has(p.paper_id + '|' + s.id)).map((s) => ({ p, s, u: p.paper_id + '|' + s.id })));
+  const tot = countRows(assignedRowsNow());
+  const progRows = asgRows.map(({ p, s, u }) => {
+    const o = prog[u] || countRows([]); const t = o.total || 1;
+    return `<tr data-progress-unit="${esc(u)}"><td>${esc(p.name)}</td><td>${esc(secTitle(s))} <span class="chip lv">${esc(s.level)}</span></td><td class="num" data-progress-stat="total">${o.total}</td><td class="num n-new" data-progress-stat="n">${o.n}</td><td class="num n-learn" data-progress-stat="l">${o.l}</td><td class="num n-rev" data-progress-stat="r">${o.r}</td><td class="num n-sus" data-progress-stat="sus">${o.sus}</td><td class="num" data-progress-stat="del">${o.del}</td><td class="num" data-progress-stat="due">${o.due}</td>
+      <td style="width:16%"><div class="progress-bar"><i style="width:${o.r / t * 100}%;background:var(--rev)"></i><i style="width:${o.l / t * 100}%;background:var(--learn)"></i><i style="width:${o.sus / t * 100}%;background:var(--sus)"></i></div></td>
+      <td class="faint">${fmtDay(asgAt[u])}</td><td><button data-un="${esc(u)}" title="仅撤销该学生本篇的布置；总词库、进度和答题记录保留">撤销本篇</button></td></tr>`;
+  }).join('');
+  const paperActions = ps.filter((p) => asgRows.some((a) => a.p.paper_id === p.paper_id)).map((p) => {
+    const assignedSections = asgRows.filter((a) => a.p.paper_id === p.paper_id);
+    const n = countRows(assignedRowsNow().filter((c) => bmap.get(c.card_key).paper_id === p.paper_id)).total;
+    return `<div class="row assigned-actions"><b>${esc(p.name)}</b><span class="faint" data-assigned-summary="${esc(p.paper_id)}">已布置 ${assignedSections.length} 篇 · ${n} 词</span><span class="sp"></span><button data-un-paper="${esc(p.paper_id)}">撤销整套布置</button></div>`;
+  }).join('');
+  // ③ 每天答题
+  const byDay = Object.fromEntries((stats || []).map((s) => [s.day_no, s]));
+  const days = []; for (let i = 13; i >= 0; i--) days.push(today - i);
+  const mx = Math.max(1, ...days.map((d) => byDay[d]?.answers || 0));
+  const dateOf = (d) => { const t = new Date((1716148800 + d * 86400) * 1000 + 8 * 3600000); return (t.getUTCMonth() + 1) + '/' + t.getUTCDate(); };
+  // ④ 不再背诵
+  const susList = assignedRowsNow().filter((c) => c.suspended && !c.deleted).sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
+  const secOfB = (b) => { const p = ps.find((x) => x.paper_id === b.paper_id), s = p?.sections.find((x) => x.id === b.section_id); return s ? (s.piece || s.board) : ''; };
+
+  app.innerHTML = `${nav()}
+    <div class="card"><div class="row"><button class="ghost" id="bk">← 学生列表</button><h1 style="margin:0">${esc(l.name)}</h1><span class="chip">学生版</span><button class="pri" id="open-card-manager">管理卡片</button><span class="sp"></span><span class="faint">最近打开：${fmtTime(l.last_active)}</span></div>
+      <div class="row" style="margin-top:10px"><span class="sub">专属链接</span><span class="linkbox sp">${esc(linkOf(l))}</span><button id="cp">复制</button></div>
+      ${note ? `<p class="ok">${esc(note)}</p>` : ''}</div>
+
+    <div class="row student-tabs" role="tablist" aria-label="学生管理">
+      ${[['cards', '管理卡片'], ['manage', '学习管理'], ['progress', '已布置与进度'], ['assign', '选词布置']].map(([id, label]) => `<button id="student-tab-${id}" role="tab" data-student-tab="${id}" aria-controls="student-panel-${id}">${label}</button>`).join('')}
+    </div>
+    <section id="student-panel-cards" role="tabpanel" aria-labelledby="student-tab-cards" hidden><div class="card"><h2>管理 ${esc(l.name)} 的卡片</h2><p class="sub">暂停只退出背诵队列；“删除”放入这位学生的“已删除”，可以恢复。学习进度保留。暂停、隐藏及标记只影响当前学生；修改卡片文字会同步给所有已布置这张卡的学生，可恢复原文。</p><div id="student-card-manager"></div></div></section>
+    <section id="student-panel-progress" role="tabpanel" aria-labelledby="student-tab-progress" hidden>
+    <div class="card"><h2>已布置 · 背诵进度</h2>
+      <p class="sub">撤销布置后，${esc(l.name)} 刷新页面就看不到对应的词。总词库、学习进度和答题记录保留，以后可以重新布置。</p>
+      ${progRows ? `${paperActions}<div class="tbl-wrap"><table><thead><tr><th>材料</th><th>板块</th><th class="num">共</th><th class="num">新词</th><th class="num">学习中</th><th class="num">复习中</th><th class="num">暂停</th><th class="num">已删除</th><th class="num">今天待复习</th><th>进度</th><th>布置日期</th><th></th></tr></thead>
+        <tbody>${progRows}<tr data-progress-total><td><b>合计</b></td><td></td><td class="num" data-progress-stat="total"><b>${tot.total}</b></td><td class="num n-new" data-progress-stat="n">${tot.n}</td><td class="num n-learn" data-progress-stat="l">${tot.l}</td><td class="num n-rev" data-progress-stat="r">${tot.r}</td><td class="num n-sus" data-progress-stat="sus">${tot.sus}</td><td class="num" data-progress-stat="del">${tot.del}</td><td class="num" data-progress-stat="due">${tot.due}</td><td></td><td></td><td></td></tr></tbody></table></div>
+        <p class="faint">进度条：<span class="n-rev">绿 = 已进入复习</span> · <span class="n-learn">红 = 学习中</span> · <span class="n-sus">黄 = 不再背诵</span> · 空白 = 还没学。</p>` : '<div class="empty">还没布置词库，请切换到“选词布置”。</div>'}
+      <div class="msg" id="umsg"></div></div></section>
+
+    <section id="student-panel-assign" role="tabpanel" aria-labelledby="student-tab-assign" hidden><div id="assignment-picker"></div></section>
+
+    <section id="student-panel-manage" role="tabpanel" aria-labelledby="student-tab-manage" hidden>
+    <div class="grid2">
+      <div class="card"><h2>每天答了多少次（最近 14 天，凌晨 4 点换天）</h2>
+        <div class="chart">${days.map((d) => { const v = byDay[d]?.answers || 0; return `<div class="c" title="${dateOf(d)}：答题 ${v} 次，新学 ${byDay[d]?.new_cards || 0}，复习 ${byDay[d]?.review_cards || 0}"><span>${v || ''}</span><i class="${v ? '' : 'z'}" style="height:${v / mx * 80}%"></i><span>${dateOf(d)}</span></div>`; }).join('')}</div></div>
+      <div class="card"><h2>每天背多少</h2>
+        <div class="row"><label>新词 <input type="number" id="npd" min="0" max="1000" value="${l.new_per_day}" style="width:80px"> 个/天</label>
+          <label>复习上限 <input type="number" id="rpd" min="0" max="10000" value="${l.rev_per_day}" style="width:90px"> 个/天</label><button id="savelim">保存</button></div>
+        <div class="msg" id="lmsg"></div>
+        <h3>这个学生能做什么</h3>
+        <label><input type="checkbox" id="self-manage" ${l.self_manage ? 'checked' : ''}> 允许学生自己管理卡片：暂停/取消暂停、设为今天复习、个人列表删除/恢复、隐藏标签</label>
+        <p class="sub">学生和老师使用同一套 Augie 卡片管理界面；颜色标记始终可用。关闭自主管理后，学生可查看和标记，其他管理操作由老师执行。</p><div class="msg" id="permission-msg"></div></div>
+    </div>
+
+    <div class="card" id="suspended-manager-summary"><h2>已暂停的卡片 <span class="chip old">${susList.length}</span></h2>
+      ${susList.length ? `<div class="tbl-wrap" style="max-height:360px;overflow-y:auto"><table><thead><tr><th>单词</th><th>意思</th><th>篇章</th><th>时间</th><th></th></tr></thead><tbody>
+        ${susList.map((c) => { const b = bmap.get(c.card_key); return `<tr><td><b>${esc(b.data.w)}</b></td><td>${esc(b.data.mean)}</td><td>${esc(secOfB(b))}</td><td class="faint">${fmtTime(c.updated_at)}</td><td style="text-align:right"><button data-res="${esc(c.card_key)}">恢复</button></td></tr>`; }).join('')}
+        </tbody></table></div>` : '<p class="sub">还没有。</p>'}
+      <div class="msg" id="smsg"></div></div></section>`;
+  bindNav();
+  $('#bk').onclick = () => { cur = null; showList(); };
+  $('#cp').onclick = async () => { try { await navigator.clipboard.writeText(linkOf(l)); $('#cp').textContent = '已复制 ✓'; } catch (e) { $('#cp').textContent = '请手动复制'; } };
+  const redraw = (n) => renderLearner(l, asg, rows, stats, bank, n);
+  let libraryMounted = false, managerMounted = false, manager = null;
+  async function loadManager() {
+    const host = $('#student-card-manager'); managerMounted = true; host.textContent = '正在读取这个学生已布置的卡片…';
+    try {
+      const state = await api.getManagementState(l.id);
+      if (!host.isConnected) return;
+      manager = mountTeachingBrowser(host, { state, api, teacher: true, learnerId: l.id,
+        onChange: (states) => { for (const c of states.values()) { const old = rows.find((x) => x.card_key === c.key); if (old) Object.assign(old, { suspended: c.suspended, deleted: c.deleted, flag: c.flag, due: c.due }); const b = bmap.get(c.key); if (b) b.data = c.d; } syncProgress(); },
+      });
+    } catch (e) { managerMounted = false; host.textContent = e.message; }
+  }
+  function selectTab(id, focus = false) {
+    learnerTab = id;
+    app.querySelectorAll('[data-student-tab]').forEach((b) => {
+      const active = b.dataset.studentTab === id;
+      b.classList.toggle('on', active); b.setAttribute('aria-selected', String(active)); b.tabIndex = active ? 0 : -1;
+      $('#student-panel-' + b.dataset.studentTab).hidden = !active;
+      if (active && focus) b.focus();
+    });
+    if (id === 'cards' && !managerMounted) loadManager();
+    else if (id === 'cards') manager?.refresh();
+    if (id === 'assign' && !libraryMounted) {
+      mountLibrary($('#assignment-picker'), { api, papers: ps, learner: l, onAssigned: (msg) => { learnerTab = 'progress'; return openLearner(l, msg); } });
+      libraryMounted = true;
+    }
+  }
+  $('#open-card-manager').onclick = () => selectTab('cards');
+  const tabIds = ['cards', 'manage', 'progress', 'assign'];
+  app.querySelectorAll('[data-student-tab]').forEach((b) => {
+    b.onclick = () => selectTab(b.dataset.studentTab);
+    b.onkeydown = (ev) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(ev.key)) return;
+      ev.preventDefault();
+      const i = tabIds.indexOf(b.dataset.studentTab);
+      selectTab(ev.key === 'Home' ? tabIds[0] : ev.key === 'End' ? tabIds[tabIds.length - 1] : tabIds[(i + (ev.key === 'ArrowRight' ? 1 : tabIds.length - 1)) % tabIds.length], true);
+    };
+  });
+  selectTab(learnerTab);
+  let unassigning = false;
+  async function revoke(p, secs, label) {
+    if (unassigning) return;
+    const n = secs.reduce((sum, sid) => sum + (prog[p.paper_id + '|' + sid]?.total || 0), 0);
+    if (!confirm(`撤销给「${l.name}」的布置？\n\n材料：${p.name}\n范围：${label}（${secs.length} 篇，共 ${n} 词）\n\n确认后，该学生刷新页面就看不到这些词。\n总词库和读音不删除，其他学生不受影响。\n该学生的学习进度和答题记录保留，以后重新布置会继续原进度。`)) return;
+    unassigning = true;
+    app.querySelectorAll('[data-un],[data-un-paper]').forEach((b) => { b.disabled = true; });
+    try { await api.unassign(l.id, p.paper_id, secs); await openLearner(l, `已撤销给 ${l.name} 的布置：${p.name} · ${label}。词库与学习记录已保留。`); }
+    catch (e) { $('#umsg').innerHTML = `<span class="err">失败：${esc(e.message)}</span>`; }
+    finally { unassigning = false; app.querySelectorAll('[data-un],[data-un-paper]').forEach((b) => { b.disabled = false; }); }
+  }
+  app.querySelectorAll('[data-un]').forEach((b) => b.onclick = () => {
+    const [pid, sid] = b.dataset.un.split('|'), p = ps.find((x) => x.paper_id === pid), s = p.sections.find((x) => x.id === sid);
+    return revoke(p, [sid], secTitle(s));
+  });
+  app.querySelectorAll('[data-un-paper]').forEach((b) => b.onclick = () => {
+    const p = ps.find((x) => x.paper_id === b.dataset.unPaper);
+    return revoke(p, asgRows.filter((a) => a.p.paper_id === p.paper_id).map((a) => a.s.id), '这套材料中已布置的全部篇章');
+  });
+  $('#self-manage').onchange = async (e) => {
+    const checked = e.target.checked; e.target.disabled = true;
+    try { await api.updateLearner(l.id, { self_manage: checked }); l.self_manage = checked; $('#permission-msg').textContent = '已保存，学生刷新后生效。'; }
+    catch (error) { e.target.checked = !!l.self_manage; $('#permission-msg').textContent = error.message; }
+    finally { e.target.disabled = false; }
+  };
+  $('#savelim').onclick = async () => {
+    const n = Math.max(0, Math.min(1000, Math.round(+$('#npd').value || 0))), r = Math.max(0, Math.min(10000, Math.round(+$('#rpd').value || 0)));
+    try { await api.updateLearner(l.id, { new_per_day: n, rev_per_day: r }); l.new_per_day = n; l.rev_per_day = r; $('#lmsg').innerHTML = `<span class="ok">已保存：每天新词 ${n}，复习上限 ${r}。学生刷新页面后生效。</span>`; }
+    catch (e) { $('#lmsg').innerHTML = `<span class="err">失败：${esc(e.message)}</span>`; }
+  };
+  function bindRestoreButtons() {
+    app.querySelectorAll('[data-res]').forEach((b) => b.onclick = async () => {
+      b.disabled = true;
+      try { await api.manageCards(l.id, 'suspend', [b.dataset.res], { value: false }); rows.find((c) => c.card_key === b.dataset.res).suspended = false; syncProgress(); manager?.refresh(); }
+      catch (e) { $('#smsg').textContent = e.message; b.disabled = false; }
+    });
+  }
+  function syncProgress() {
+    Object.keys(prog).forEach((k) => delete prog[k]); Object.assign(prog, computeProgress());
+    app.querySelectorAll('[data-progress-unit]').forEach((tr) => {
+      const o = prog[tr.dataset.progressUnit] || countRows([]);
+      tr.querySelectorAll('[data-progress-stat]').forEach((cell) => { cell.textContent = o[cell.dataset.progressStat] || 0; });
+      tr.querySelectorAll('.progress-bar i').forEach((bar, i) => { bar.style.width = [o.r, o.l, o.sus][i] / (o.total || 1) * 100 + '%'; });
+    });
+    const sum = countRows(assignedRowsNow());
+    app.querySelectorAll('[data-progress-total] [data-progress-stat]').forEach((cell) => { cell.textContent = sum[cell.dataset.progressStat] || 0; });
+    app.querySelectorAll('[data-assigned-summary]').forEach((node) => {
+      const id = node.dataset.assignedSummary, n = countRows(assignedRowsNow().filter((c) => bmap.get(c.card_key).paper_id === id)).total;
+      node.textContent = '已布置 ' + asgRows.filter((a) => a.p.paper_id === id).length + ' 篇 · ' + n + ' 词';
+    });
+    const paused = assignedRowsNow().filter((c) => c.suspended && !c.deleted);
+    $('#suspended-manager-summary').innerHTML = '<h2>已暂停的卡片 <span class="chip old">' + paused.length + '</span></h2>' +
+      (paused.length ? '<div class="tbl-wrap"><table><thead><tr><th>单词</th><th>意思</th><th>篇章</th><th></th></tr></thead><tbody>' + paused.map((c) => { const b = bmap.get(c.card_key); return `<tr><td>${esc(b.data.w)}</td><td>${esc(b.data.mean)}</td><td>${esc(secOfB(b))}</td><td><button data-res="${esc(c.card_key)}">恢复</button></td></tr>`; }).join('') + '</tbody></table></div>' : '<p class="sub">还没有。</p>') + '<div id="smsg" class="msg"></div>';
+    bindRestoreButtons();
+  }
+  bindRestoreButtons();
+}
+
+// ---------- 词库 ----------
+function showBank() {
+  view = 'bank';
+  app.innerHTML = `${nav()}<div id="library-root"></div>`; bindNav();
+  mountLibrary($('#library-root'), { api, papers: papers || [], learners });
+}
+function showImport() {
+  view = 'import';
+  app.innerHTML = `${nav()}<div id="upload-root"></div>`; bindNav();
+  mountUpload($('#upload-root'), { api, papers: papers || [], onImported: async () => { papers = await api.listPapers(); } });
+}
+
+const saved = ssGet('vision_teacher_token');
+if (MOCK) loadAll();
+else if (saved) { api = createTeacherApi(saved); loadAll(); }
+else showLogin();
+</script>
+</body>
+</html>
