@@ -112,6 +112,9 @@ const code = normCode(incomingCode ?? lsGet('vision_yuedu_code'));
 if (incomingCode !== null) lsSet('vision_yuedu_code', code.length === 16 ? code : null);
 if (location.hash || location.search) history.replaceState(null, '', location.pathname);
 const pendingKey = `vision_yuedu_pending:${code}`;
+window.addEventListener('hashchange', () => {
+  if (new URLSearchParams(location.hash.slice(1)).has('k')) location.reload();
+});
 
 // ---------- 状态 ----------
 const S = { api: null, learner: null, skew: 0, today: 0, papers: [], cards: new Map(), log: [], pending: [], flushing: false,
