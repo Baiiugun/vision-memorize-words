@@ -134,10 +134,12 @@ const noSql = (m) => (/kind|anki_test_bank|anki_test_assign|anki_test_teacher_as
 const secTitle = (s) => s.label || [s.board, s.piece].filter(Boolean).join(' · ');
 
 let api = null, learners = [], papers = [], view = importRequested ? 'import' : 'list', cur = null;
+let importOwner = null;
 let learnerTab = 'manage';
 
 // ---------- 学校账号登录 ----------
 function showLogin(msg) {
+  api = null; learners = []; papers = []; cur = null; view = importRequested ? 'import' : 'list';
   app.innerHTML = `<div class="card" style="max-width:520px;margin:30px auto"><h1>老师登录</h1>
     <div class="row"><input type="text" id="em" placeholder="老师账号" size="26" autocomplete="username"><input type="password" id="pw" placeholder="老师密码" autocomplete="current-password"><button class="pri" id="go">登录</button></div>
     ${msg ? `<p class="err">${esc(msg)}</p>` : ''}<p class="faint">请使用学校分配的老师账号。</p></div>`;
@@ -147,19 +149,20 @@ function showLogin(msg) {
   };
   $('#go').onclick = go; $('#pw').onkeydown = (e) => { if (e.key === 'Enter') go(); };
 }
-function logout() { ssSet('vision_teacher_token', null); api = null; showLogin(); }
+function logout() { ssSet('vision_teacher_token', null); location.reload(); }
 function authFail(e) { return e.status === 401 || /JWT|expired/i.test(e.message); }
 
 async function loadAll() {
   app.innerHTML = '<p class="faint">加载中…</p>';
   try {
+    importOwner = await api.requirePrivateLibrary();
     learners = (await api.listLearners()).filter(isYd);
     try { papers = await api.listPapers(); } catch (e) { if (authFail(e)) throw e; papers = null; }
     render();
   } catch (e) {
     if (authFail(e)) { ssSet('vision_teacher_token', null); return showLogin('登录过期，请重新登录'); }
     const unavailable = e.code === 'PGRST205' || e.code === 'PGRST202' || e.status === 404;
-    const message = unavailable ? '学校教学库尚未初始化，请联系管理员完成设置。' : '暂时无法读取教学数据，请稍后重试。';
+    const message = e.code === 'PRIVATE_LIBRARY_REQUIRED' ? e.message : unavailable ? '学校教学库尚未初始化，请联系管理员完成设置。' : '暂时无法读取教学数据，请稍后重试。';
     app.innerHTML = `<div class="card"><h1>教学数据暂不可用</h1><p class="err">${message}</p><button id="rl">重试</button> <button class="ghost" id="lo">退出登录</button></div>`;
     $('#rl').onclick = loadAll; $('#lo').onclick = logout;
   }
@@ -267,7 +270,7 @@ function renderLearner(l, asg, rows, stats, bank, note) {
     return Object.fromEntries(Object.entries(groups).map(([u, list]) => [u, countRows(list)]));
   };
   const prog = computeProgress();
-  const ps = papers || [];
+  const ps = (papers || []).filter((p) => p.teacher_id === l.teacher_id);
   // ② 已布置 + 进度
   const asgRows = ps.flatMap((p) => p.sections.filter((s) => asgSet.has(p.paper_id + '|' + s.id)).map((s) => ({ p, s, u: p.paper_id + '|' + s.id })));
   const tot = countRows(assignedRowsNow());
@@ -437,7 +440,7 @@ function showBank() {
 function showImport() {
   view = 'import';
   app.innerHTML = `${nav()}<div id="upload-root"></div>`; bindNav();
-  mountUpload($('#upload-root'), { api, papers: papers || [], onImported: async () => { papers = await api.listPapers(); } });
+  mountUpload($('#upload-root'), { api, papers: (papers || []).filter((p) => p.teacher_id === importOwner), onImported: async () => { papers = await api.listPapers(); } });
 }
 
 const saved = ssGet('vision_teacher_token');
